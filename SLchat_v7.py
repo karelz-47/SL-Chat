@@ -1,7 +1,11 @@
 import streamlit as st
-import openai
+from openai import OpenAI, APIConnectionError, APIError
 import pandas as pd
 import tiktoken
+from docx import Document
+import pypandoc
+import fitz  # PyMuPDF
+
 
 # Set page config
 st.set_page_config(page_title="Custom OpenAI Chatbot", layout="wide")
@@ -40,9 +44,10 @@ st.sidebar.title("Settings")
 # OpenAI API Key Input
 api_key = st.sidebar.text_input("Enter your OpenAI API Key", type="password")
 if api_key:
-    openai.api_key = api_key
+    client = OpenAI(api_key=api_key)  # Instantiate the OpenAI client with the API key
 else:
     st.warning("Please enter your OpenAI API Key to use the application.")
+
 
 # Model selection with descriptions
 model_options = {
@@ -79,7 +84,7 @@ st.title("🗨️ Custom OpenAI Chatbot")
 # Input form
 with st.form(key='input_form', clear_on_submit=True):
     user_input = st.text_area("Your message:", height=100)
-    uploaded_files = st.file_uploader("Upload files (Excel or CSV)", accept_multiple_files=True, type=['xls', 'xlsx', 'csv'])
+    uploaded_files = st.file_uploader("Upload files (Excel, CSV, DOCX, DOC, or PDF)", accept_multiple_files=True, type=['xls', 'xlsx', 'csv', 'docx', 'doc', 'pdf'])
     submit_button = st.form_submit_button(label='Send')
 
 # Handle user input
@@ -87,45 +92,65 @@ if submit_button and api_key and user_input:
     # Append user message to session state
     st.session_state['messages'].append({"role": "user", "content": user_input})
 
+    # Process the uploaded files and add their data to the messages
+    if uploaded_files:
+        file_content_list = []
+        for uploaded_file in uploaded_files:
+            if uploaded_file.type == 'text/csv':
+                # Read CSV file
+                df = pd.read_csv(uploaded_file)
+                file_content_list.append(df.to_string())
+            elif uploaded_file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                # Read Excel file
+                df = pd.read_excel(uploaded_file)
+                file_content_list.append(df.to_string())
+            elif uploaded_file.type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                # Read DOCX file
+                doc = Document(uploaded_file)
+                doc_content = '\n'.join([paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip() != ""])
+                file_content_list.append(doc_content)
+            elif uploaded_file.type == 'application/msword':
+                # Read DOC file using pypandoc
+                doc_content = pypandoc.convert_file(uploaded_file, 'plain', format='doc')
+                file_content_list.append(doc_content)
+            elif uploaded_file.type == 'application/pdf':
+                # Read PDF file
+                pdf_document = fitz.open(stream=uploaded_file.read(), filetype="pdf")
+                pdf_content = ""
+                for page_num in range(pdf_document.page_count):
+                    page = pdf_document.load_page(page_num)
+                    pdf_content += page.get_text()
+                file_content_list.append(pdf_content)
+            else:
+                st.warning(f"Unsupported file type: {uploaded_file.type}")
+
+    # Combine all file contents and add them to the messages
+    if file_content_list:
+        combined_file_content = "\n\n".join(file_content_list)
+        # Add file content as a user message
+        st.session_state['messages'].append({"role": "user", "content": f"File data:\n{combined_file_content}"})
+
     # Prepare the conversation
     messages = st.session_state['messages']
 
-    # Count tokens
-    def count_tokens(messages, model):
-        encoding = tiktoken.encoding_for_model(model)
-        num_tokens = 0
-        for message in messages:
-            num_tokens += 4  # Every message follows <im_start>{role/name}\n{content}<im_end>\n
-            for key, value in message.items():
-                num_tokens += len(encoding.encode(value))
-        num_tokens += 2  # Every reply is primed with <im_start>assistant
-        return num_tokens
-
-    total_tokens = count_tokens(messages, selected_model)
-
-    # Check if total tokens exceed context window
-    if total_tokens + max_output_tokens_limit > context_window_limit:
-        st.error("The total tokens (input + max output) exceed the model's context window.")
-        st.stop()
-
     try:
         # Send request to OpenAI API
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model=selected_model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_output_tokens_limit
         )
 
-        # Get assistant's reply
-        assistant_message = response.choices[0].message['content']
+        # Get assistant's reply (updated to use attribute access)
+        assistant_message = response.choices[0].message.content
         st.session_state['messages'].append({"role": "assistant", "content": assistant_message})
 
         # Display assistant's reply
         st.subheader("Assistant's Response")
         st.markdown(assistant_message)
 
-    except openai.error.OpenAIError as e:
+    except (APIConnectionError, APIError) as e:
         st.error(f"OpenAI API Error: {e}")
     except Exception as e:
         st.error(f"An error occurred: {e}")

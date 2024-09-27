@@ -1,4 +1,8 @@
 streamlit
-openai
+openai>=1.0.0
 pandas
 tiktoken
+openpyxl
+python-docx
+pypandoc
+PyMuPDF
