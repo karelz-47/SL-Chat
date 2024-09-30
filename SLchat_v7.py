@@ -92,6 +92,9 @@ if submit_button and api_key and user_input:
     # Append user message to session state
     st.session_state['messages'].append({"role": "user", "content": user_input})
 
+    # Initialize an empty list to handle file content
+    file_content_list = []
+
     # Process the uploaded files and add their data to the messages
     if uploaded_files:
         file_content_list = []
