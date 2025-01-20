@@ -5,6 +5,7 @@ import tiktoken
 from docx import Document
 import pypandoc
 import fitz  # PyMuPDF
+import tempfile
 
 
 # Set page config
@@ -114,7 +115,12 @@ if submit_button and api_key and user_input:
                 file_content_list.append(doc_content)
             elif uploaded_file.type == 'application/msword':
                 # Read DOC file using pypandoc
-                doc_content = pypandoc.convert_file(uploaded_file, 'plain', format='doc')
+                with tempfile.NamedTemporaryFile(suffix=".doc", delete=False) as tmp_file:
+                tmp_file.write(uploaded_file.getvalue())  # Write the bytes to disk
+                tmp_file.flush()  # Ensure data is written
+                doc_path = tmp_file.name  # Path to the temp file
+                # Now pass the *path* to pypandoc
+                doc_content = pypandoc.convert_file(doc_path, to='plain', format='doc')
                 file_content_list.append(doc_content)
             elif uploaded_file.type == 'application/pdf':
                 # Read PDF file
