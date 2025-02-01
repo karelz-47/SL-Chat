@@ -51,25 +51,27 @@ else:
 
 
 # Model selection with descriptions
+# Only keeping models from the 4o, o1, and o3 families (usable for text inputs/outputs)
 model_options = {
     "GPT-4o - High-intelligence model for complex tasks": "gpt-4o",
     "GPT-4o mini - Affordable model for lightweight tasks": "gpt-4o-mini",
     "o1-preview - Beta reasoning model": "o1-preview",
     "o1-mini - Fast reasoning model": "o1-mini",
-    "GPT-4 Turbo - Previous high-intelligence model": "gpt-4-turbo",
-    "GPT-4 - Previous high-intelligence model": "gpt-4"
+    "o3 - Next-generation text model": "o3",
+    "o3-mini - Compact next-generation text model": "o3-mini"
 }
 model_name = st.sidebar.selectbox("Choose a model", list(model_options.keys()))
 selected_model = model_options[model_name]
 
-# Define context windows and max output tokens
+# Define context windows and max output tokens for each model
+# (Note: The values for the o3 models are placeholders.)
 model_specs = {
     "gpt-4o": {"context_window": 128000, "max_output_tokens": 4096},
     "gpt-4o-mini": {"context_window": 128000, "max_output_tokens": 16384},
     "o1-preview": {"context_window": 128000, "max_output_tokens": 32768},
     "o1-mini": {"context_window": 128000, "max_output_tokens": 65536},
-    "gpt-4-turbo": {"context_window": 128000, "max_output_tokens": 4096},
-    "gpt-4": {"context_window": 8192, "max_output_tokens": 8192}
+    "o3": {"context_window": 128000, "max_output_tokens": 4096},
+    "o3-mini": {"context_window": 128000, "max_output_tokens": 8192}
 }
 
 # Get selected model specs
