@@ -167,10 +167,10 @@ try:
     st.subheader("Assistant's Response")
     st.markdown(assistant_message)
 
-    except (APIConnectionError, APIError) as e:
-        st.error(f"OpenAI API Error: {e}")
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+except (APIConnectionError, APIError) as e:
+    st.error(f"OpenAI API Error: {e}")
+except Exception as e:
+     st.error(f"An error occurred: {e}")
 
 # Display conversation history
 st.markdown("---")
