@@ -67,7 +67,7 @@ selected_model = model_options[model_name]
 model_specs = {
     "gpt-4o": {"context_window": 128000, "max_output_tokens": 4096},
     "gpt-4o-mini": {"context_window": 128000, "max_output_tokens": 16384},
-    "o1-2024-12-17": {"context_window": 200000, "max_output_tokens": 100000},
+    "o1-2024-12-17": {"context_window": 200000, "max_completion_tokens": 100000},
     "o3-mini-2025-01-31": {"context_window": 200000, "max_output_tokens": 100000},
     "o1-mini-2024-09-12": {"context_window": 128000, "max_output_tokens": 65536}
 }
