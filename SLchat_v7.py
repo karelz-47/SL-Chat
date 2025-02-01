@@ -90,9 +90,9 @@ with st.form(key='input_form', clear_on_submit=True):
 
 # Always define token_param before using it:
 if selected_model.startswith("o1") or selected_model.startswith("o3"):
-        token_param = {"max_completion_tokens": max_output_tokens_limit}
-    else:
-        token_param = {"max_tokens": max_output_tokens_limit}
+    token_param = {"max_completion_tokens": max_output_tokens_limit}
+else:
+    token_param = {"max_tokens": max_output_tokens_limit}
 
 # For models starting with "o3", the API does not support the "temperature" parameter.
 api_params = {
