@@ -144,26 +144,26 @@ if submit_button and api_key and user_input:
     messages = st.session_state['messages']
 
     if selected_model.startswith("o3"):
-    token_param = {"max_completion_tokens": max_output_tokens_limit}
-else:
-    token_param = {"max_tokens": max_output_tokens_limit}
+        token_param = {"max_completion_tokens": max_output_tokens_limit}
+    else:
+        token_param = {"max_tokens": max_output_tokens_limit}
 
-try:
-    # Send request to OpenAI API
-    response = client.chat.completions.create(
-        model=selected_model,
-        messages=st.session_state['messages'],
-        temperature=temperature,
-        **token_param
-    )
+    try:
+        # Send request to OpenAI API
+        response = client.chat.completions.create(
+            model=selected_model,
+            messages=st.session_state['messages'],
+            temperature=temperature,
+            **token_param
+        )
 
-    # Get assistant's reply (updated to use attribute access)
-    assistant_message = response.choices[0].message.content
-    st.session_state['messages'].append({"role": "assistant", "content": assistant_message})
+        # Get assistant's reply (updated to use attribute access)
+        assistant_message = response.choices[0].message.content
+        st.session_state['messages'].append({"role": "assistant", "content": assistant_message})
 
-    # Display assistant's reply
-    st.subheader("Assistant's Response")
-    st.markdown(assistant_message)
+        # Display assistant's reply
+        st.subheader("Assistant's Response")
+        st.markdown(assistant_message)
 
     except (APIConnectionError, APIError) as e:
         st.error(f"OpenAI API Error: {e}")
