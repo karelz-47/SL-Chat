@@ -88,6 +88,22 @@ with st.form(key='input_form', clear_on_submit=True):
     uploaded_files = st.file_uploader("Upload files (Excel, CSV, DOCX, DOC, or PDF)", accept_multiple_files=True, type=['xls', 'xlsx', 'csv', 'docx', 'doc', 'pdf'])
     submit_button = st.form_submit_button(label='Send')
 
+# Always define token_param before using it:
+if selected_model.startswith("o1") or selected_model.startswith("o3"):
+        token_param = {"max_completion_tokens": max_output_tokens_limit}
+    else:
+        token_param = {"max_tokens": max_output_tokens_limit}
+
+# For models starting with "o3", the API does not support the "temperature" parameter.
+api_params = {
+    "model": selected_model,
+    "messages": st.session_state['messages']
+}
+if not selected_model.startswith("o3"):
+    api_params["temperature"] = temperature
+api_params.update(token_param)
+
+
 # Handle user input
 if submit_button and api_key and user_input:
     # Append user message to session state
@@ -142,20 +158,6 @@ if submit_button and api_key and user_input:
 
     # Prepare the conversation
     messages = st.session_state['messages']
-
-    if selected_model.startswith("o1") or selected_model.startswith("o3"):
-        token_param = {"max_completion_tokens": max_output_tokens_limit}
-    else:
-        token_param = {"max_tokens": max_output_tokens_limit}
-
-# For models starting with "o3", the API does not support the "temperature" parameter.
-api_params = {
-    "model": selected_model,
-    "messages": st.session_state['messages']
-}
-if not selected_model.startswith("o3"):
-    api_params["temperature"] = temperature
-api_params.update(token_param)
 
 try:
     # Send request to OpenAI API using the prepared parameters
