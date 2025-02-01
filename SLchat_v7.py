@@ -7,7 +7,6 @@ import pypandoc
 import fitz  # PyMuPDF
 import tempfile
 
-
 # Set page config
 st.set_page_config(page_title="Custom OpenAI Chatbot", layout="wide")
 
@@ -49,7 +48,6 @@ if api_key:
 else:
     st.warning("Please enter your OpenAI API Key to use the application.")
 
-
 # Model selection with descriptions
 # Only keeping models from the 4o, o1, and o3 families (usable for text inputs/outputs)
 model_options = {
@@ -85,7 +83,11 @@ st.title("🗨️ Custom OpenAI Chatbot")
 # Input form
 with st.form(key='input_form', clear_on_submit=True):
     user_input = st.text_area("Your message:", height=100)
-    uploaded_files = st.file_uploader("Upload files (Excel, CSV, DOCX, DOC, or PDF)", accept_multiple_files=True, type=['xls', 'xlsx', 'csv', 'docx', 'doc', 'pdf'])
+    uploaded_files = st.file_uploader(
+        "Upload files (Excel, CSV, DOCX, DOC, or PDF)",
+        accept_multiple_files=True,
+        type=['xls', 'xlsx', 'csv', 'docx', 'doc', 'pdf']
+    )
     submit_button = st.form_submit_button(label='Send')
 
 # Always define token_param before using it:
@@ -103,7 +105,6 @@ if not selected_model.startswith("o3"):
     api_params["temperature"] = temperature
 api_params.update(token_param)
 
-
 # Handle user input
 if submit_button and api_key and user_input:
     # Append user message to session state
@@ -114,7 +115,6 @@ if submit_button and api_key and user_input:
 
     # Process the uploaded files and add their data to the messages
     if uploaded_files:
-        file_content_list = []
         for uploaded_file in uploaded_files:
             if uploaded_file.type == 'text/csv':
                 # Read CSV file
@@ -127,7 +127,9 @@ if submit_button and api_key and user_input:
             elif uploaded_file.type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                 # Read DOCX file
                 doc = Document(uploaded_file)
-                doc_content = '\n'.join([paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip() != ""])
+                doc_content = '\n'.join(
+                    [paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip() != ""]
+                )
                 file_content_list.append(doc_content)
             elif uploaded_file.type == 'application/msword':
                 # Read DOC file using pypandoc
@@ -135,7 +137,6 @@ if submit_button and api_key and user_input:
                     tmp_file.write(uploaded_file.getvalue())  # Write the bytes to disk
                     tmp_file.flush()  # Ensure data is written
                     doc_path = tmp_file.name  # Path to the temp file
-                
                 # Now pass the *path* to pypandoc
                 doc_content = pypandoc.convert_file(doc_path, to='plain', format='doc')
                 file_content_list.append(doc_content)
@@ -153,11 +154,7 @@ if submit_button and api_key and user_input:
     # Combine all file contents and add them to the messages
     if file_content_list:
         combined_file_content = "\n\n".join(file_content_list)
-        # Add file content as a user message
         st.session_state['messages'].append({"role": "user", "content": f"File data:\n{combined_file_content}"})
-
-    # Prepare the conversation
-    messages = st.session_state['messages']
 
 try:
     # Send request to OpenAI API using the prepared parameters
@@ -172,7 +169,7 @@ try:
 except (APIConnectionError, APIError) as e:
     st.error(f"OpenAI API Error: {e}")
 except Exception as e:
-     st.error(f"An error occurred: {e}")
+    st.error(f"An error occurred: {e}")
 
 # Display conversation history
 st.markdown("---")
