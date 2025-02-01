@@ -55,10 +55,9 @@ else:
 model_options = {
     "GPT-4o - High-intelligence model for complex tasks": "gpt-4o",
     "GPT-4o mini - Affordable model for lightweight tasks": "gpt-4o-mini",
-    "o1-preview - Beta reasoning model": "o1-preview",
-    "o1-mini - Fast reasoning model": "o1-mini",
-    "o3 - Next-generation text model": "o3",
-    "o3-mini - Compact next-generation text model": "o3-mini"
+    "o1 - Reasoning model": "o1-2024-12-17",
+    "o1-mini - Fast reasoning model": "o1-mini-2024-09-12",
+    "o3-mini - Compact next-generation text model": "o3-mini-2025-01-31"
 }
 model_name = st.sidebar.selectbox("Choose a model", list(model_options.keys()))
 selected_model = model_options[model_name]
@@ -68,10 +67,9 @@ selected_model = model_options[model_name]
 model_specs = {
     "gpt-4o": {"context_window": 128000, "max_output_tokens": 4096},
     "gpt-4o-mini": {"context_window": 128000, "max_output_tokens": 16384},
-    "o1-preview": {"context_window": 128000, "max_output_tokens": 32768},
-    "o1-mini": {"context_window": 128000, "max_output_tokens": 65536},
-    "o3": {"context_window": 128000, "max_output_tokens": 4096},
-    "o3-mini": {"context_window": 128000, "max_output_tokens": 8192}
+    "o1-2024-12-17": {"context_window": 200000, "max_output_tokens": 100000},
+    "o3-mini-2025-01-31": {"context_window": 200000, "max_output_tokens": 100000},
+    "o1-mini-2024-09-12": {"context_window": 128000, "max_output_tokens": 65536}
 }
 
 # Get selected model specs
