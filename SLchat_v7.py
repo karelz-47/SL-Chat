@@ -47,6 +47,7 @@ if api_key:
     client = OpenAI(api_key=api_key)  # Instantiate the OpenAI client with the API key
 else:
     st.warning("Please enter your OpenAI API Key to use the application.")
+    st.stop()  # Stop execution if no API key is provided
 
 # Model selection with descriptions
 # Only keeping models from the 4o, o1, and o3 families (usable for text inputs/outputs)
@@ -61,7 +62,6 @@ model_name = st.sidebar.selectbox("Choose a model", list(model_options.keys()))
 selected_model = model_options[model_name]
 
 # Define context windows and max output tokens for each model
-# (Note: The values for the o3 models are placeholders.)
 model_specs = {
     "gpt-4o": {"context_window": 128000, "max_output_tokens": 4096},
     "gpt-4o-mini": {"context_window": 128000, "max_output_tokens": 16384},
@@ -117,31 +117,25 @@ if submit_button and api_key and user_input:
     if uploaded_files:
         for uploaded_file in uploaded_files:
             if uploaded_file.type == 'text/csv':
-                # Read CSV file
                 df = pd.read_csv(uploaded_file)
                 file_content_list.append(df.to_string())
             elif uploaded_file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-                # Read Excel file
                 df = pd.read_excel(uploaded_file)
                 file_content_list.append(df.to_string())
             elif uploaded_file.type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-                # Read DOCX file
                 doc = Document(uploaded_file)
                 doc_content = '\n'.join(
                     [paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip() != ""]
                 )
                 file_content_list.append(doc_content)
             elif uploaded_file.type == 'application/msword':
-                # Read DOC file using pypandoc
                 with tempfile.NamedTemporaryFile(suffix=".doc", delete=False) as tmp_file:
-                    tmp_file.write(uploaded_file.getvalue())  # Write the bytes to disk
-                    tmp_file.flush()  # Ensure data is written
-                    doc_path = tmp_file.name  # Path to the temp file
-                # Now pass the *path* to pypandoc
+                    tmp_file.write(uploaded_file.getvalue())
+                    tmp_file.flush()
+                    doc_path = tmp_file.name
                 doc_content = pypandoc.convert_file(doc_path, to='plain', format='doc')
                 file_content_list.append(doc_content)
             elif uploaded_file.type == 'application/pdf':
-                # Read PDF file
                 pdf_document = fitz.open(stream=uploaded_file.read(), filetype="pdf")
                 pdf_content = ""
                 for page_num in range(pdf_document.page_count):
@@ -159,13 +153,11 @@ if submit_button and api_key and user_input:
 try:
     # Send request to OpenAI API using the prepared parameters
     response = client.chat.completions.create(**api_params)
-
     # Retrieve and display the assistant's reply
     assistant_message = response.choices[0].message.content
     st.session_state['messages'].append({"role": "assistant", "content": assistant_message})
     st.subheader("Assistant's Response")
     st.markdown(assistant_message)
-
 except (APIConnectionError, APIError) as e:
     st.error(f"OpenAI API Error: {e}")
 except Exception as e:
