@@ -46,8 +46,7 @@ api_key = st.sidebar.text_input("Enter your OpenAI API Key", type="password")
 if api_key:
     client = OpenAI(api_key=api_key)  # Instantiate the OpenAI client with the API key
 else:
-    st.warning("Please enter your OpenAI API Key to use the application.")
-    st.stop()  # Stop execution if no API key is provided
+    st.sidebar.warning("Enter your API Key to send messages.")
 
 # Model selection with descriptions
 # Only keeping models from the 4o, o1, and o3 families (usable for text inputs/outputs)
@@ -80,7 +79,7 @@ temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7)
 # Main chat interface
 st.title("🗨️ Custom OpenAI Chatbot")
 
-# Input form
+# Input form (always visible)
 with st.form(key='input_form', clear_on_submit=True):
     user_input = st.text_area("Your message:", height=100)
     uploaded_files = st.file_uploader(
@@ -90,31 +89,14 @@ with st.form(key='input_form', clear_on_submit=True):
     )
     submit_button = st.form_submit_button(label='Send')
 
-# Always define token_param before using it:
-if selected_model.startswith("o1") or selected_model.startswith("o3"):
-    token_param = {"max_completion_tokens": max_output_tokens_limit}
-else:
-    token_param = {"max_tokens": max_output_tokens_limit}
-
-# For models starting with "o3", the API does not support the "temperature" parameter.
-api_params = {
-    "model": selected_model,
-    "messages": st.session_state['messages']
-}
-if not selected_model.startswith("o3"):
-    api_params["temperature"] = temperature
-api_params.update(token_param)
-
-# Handle user input
-if submit_button and api_key and user_input:
+# Process user input only if the submit button was pressed and a message was entered.
+if submit_button and user_input:
     # Append user message to session state
     st.session_state['messages'].append({"role": "user", "content": user_input})
 
-    # Initialize an empty list to handle file content
-    file_content_list = []
-
-    # Process the uploaded files and add their data to the messages
+    # Process the uploaded files and append their contents (if any)
     if uploaded_files:
+        file_content_list = []
         for uploaded_file in uploaded_files:
             if uploaded_file.type == 'text/csv':
                 df = pd.read_csv(uploaded_file)
@@ -124,9 +106,7 @@ if submit_button and api_key and user_input:
                 file_content_list.append(df.to_string())
             elif uploaded_file.type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                 doc = Document(uploaded_file)
-                doc_content = '\n'.join(
-                    [paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip() != ""]
-                )
+                doc_content = '\n'.join([paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip() != ""])
                 file_content_list.append(doc_content)
             elif uploaded_file.type == 'application/msword':
                 with tempfile.NamedTemporaryFile(suffix=".doc", delete=False) as tmp_file:
@@ -144,24 +124,40 @@ if submit_button and api_key and user_input:
                 file_content_list.append(pdf_content)
             else:
                 st.warning(f"Unsupported file type: {uploaded_file.type}")
+        if file_content_list:
+            combined_file_content = "\n\n".join(file_content_list)
+            st.session_state['messages'].append({"role": "user", "content": f"File data:\n{combined_file_content}"})
 
-    # Combine all file contents and add them to the messages
-    if file_content_list:
-        combined_file_content = "\n\n".join(file_content_list)
-        st.session_state['messages'].append({"role": "user", "content": f"File data:\n{combined_file_content}"})
+    # Only attempt to call the API if an API key is provided.
+    if not api_key:
+        st.error("Please enter your API key to send a message.")
+    else:
+        # Build the token parameter based on the selected model.
+        if selected_model.startswith("o1") or selected_model.startswith("o3"):
+            token_param = {"max_completion_tokens": max_output_tokens_limit}
+        else:
+            token_param = {"max_tokens": max_output_tokens_limit}
 
-try:
-    # Send request to OpenAI API using the prepared parameters
-    response = client.chat.completions.create(**api_params)
-    # Retrieve and display the assistant's reply
-    assistant_message = response.choices[0].message.content
-    st.session_state['messages'].append({"role": "assistant", "content": assistant_message})
-    st.subheader("Assistant's Response")
-    st.markdown(assistant_message)
-except (APIConnectionError, APIError) as e:
-    st.error(f"OpenAI API Error: {e}")
-except Exception as e:
-    st.error(f"An error occurred: {e}")
+        # Build the API parameters. (The "messages" key points to the mutable session state list.)
+        api_params = {
+            "model": selected_model,
+            "messages": st.session_state['messages']
+        }
+        if not selected_model.startswith("o3"):
+            api_params["temperature"] = temperature
+        api_params.update(token_param)
+
+        try:
+            # Send request to OpenAI API using the prepared parameters.
+            response = client.chat.completions.create(**api_params)
+            assistant_message = response.choices[0].message.content
+            st.session_state['messages'].append({"role": "assistant", "content": assistant_message})
+            st.subheader("Assistant's Response")
+            st.markdown(assistant_message)
+        except (APIConnectionError, APIError) as e:
+            st.error(f"OpenAI API Error: {e}")
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 
 # Display conversation history
 st.markdown("---")
