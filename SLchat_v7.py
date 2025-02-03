@@ -143,7 +143,7 @@ if submit_button and user_input:
             "model": selected_model,
             "messages": st.session_state['messages']
         }
-        iif not (selected_model.startswith("o1") or selected_model.startswith("o3")):
+        if not (selected_model.startswith("o1") or selected_model.startswith("o3")):
             api_params["temperature"] = temperature
         
         api_params.update(token_param)
