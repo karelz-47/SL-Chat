@@ -1,8 +1,13 @@
 streamlit
 openai>=1.0.0
+markitdown
 pandas
 tiktoken
 openpyxl
 python-docx
 pypandoc
 PyMuPDF
+python-pptx
+ebooklib
+Pillow
+pydub
