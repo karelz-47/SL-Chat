@@ -76,20 +76,16 @@ model_limits = {
 
 # Model selection with descriptions
 model_options = {
-    "o3-mini (Fast, flexible, intelligent reasoning model)": "o3-mini-2025-01-31",
-    "gpt-4o (Fast, intelligent, flexible GPT model)": "gpt-4o-2024-08-06",
-    "o1 (High-intelligence reasoning model)": "o1-2024-12-17",
-    "gpt-4.5-preview (Largest and most capable GPT model)": "gpt-4.5-preview-2025-02-27",
-    "o1-pro (More compute for better responses)": "o1-pro-2025-03-19"
+    "GPT-6.1 Sol (Recommended)": "gpt-6.1-sol",
+    "GPT-6 Astra (Most powerful)": "gpt-6-astra",
+    "GPT-6 Luna (Fastest and cheapest)": "gpt-6-luna"
 }
 
 # For each model, define your context window and max output tokens as needed.
 model_specs = {
-    "o3-mini-2025-01-31": {"context_window": 128000, "max_output_tokens": 16384},
-    "gpt-4o-2024-08-06": {"context_window": 128000, "max_output_tokens": 4096},
-    "o1-2024-12-17": {"context_window": 128000, "max_output_tokens": 16384},
-    "gpt-4.5-preview-2025-02-27": {"context_window": 128000, "max_output_tokens": 16384},
-    "o1-pro-2025-03-19": {"context_window": 128000, "max_output_tokens": 16384}
+    "gpt-6.1-sol": {"context_window": 1050000, "max_output_tokens": 32768},
+    "gpt-6-astra": {"context_window": 1050000, "max_output_tokens": 32768},
+    "gpt-6-luna": {"context_window": 1050000, "max_output_tokens": 32768}
 }
 ###############################################################################
 
@@ -138,10 +134,7 @@ if submit_button and user_input:
         # Decide which parameter to send to the API
         # Typically "max_tokens" is for GPT-4-like models,
         # "max_completion_tokens" for the 'o' series. Adjust as needed.
-        if selected_model.startswith(("o1", "o3")):
-            token_param = {"max_completion_tokens": max_output_tokens_limit}
-        else:
-            token_param = {"max_tokens": max_output_tokens_limit}
+        token_param = {"max_completion_tokens": max_output_tokens_limit}
 
         api_params = {
             "model": selected_model,
